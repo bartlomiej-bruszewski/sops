@@ -70,11 +70,12 @@ func (p *polynomial) evaluate(x uint8) uint8 {
 // An implementation of Lagrange interpolation
 // <https://en.wikipedia.org/wiki/Lagrange_polynomial>
 // For this particular implementation, x is always 0
-func interpolatePolynomial(xSamples, ySamples []uint8, x uint8) uint8 {
+func interpolatePolynomial(xSamples []uint8) []uint8 {
 	limit := len(xSamples)
-	var result, basis uint8
+	basisFactors := make([]uint8, limit)
+	const x uint8 = 0
 	for i := 0; i < limit; i++ {
-		basis = 1
+		var basis uint8 = 1
 		for j := 0; j < limit; j++ {
 			if i == j {
 				continue
@@ -84,10 +85,9 @@ func interpolatePolynomial(xSamples, ySamples []uint8, x uint8) uint8 {
 			term := div(num, denom)
 			basis = mult(basis, term)
 		}
-		group := mult(ySamples[i], basis)
-		result = add(result, group)
+		basisFactors[i] = basis
 	}
-	return result
+	return basisFactors
 }
 
 // div divides two numbers in GF(2^8)
@@ -275,8 +275,6 @@ func Combine(parts [][]byte) ([]byte, error) {
 
 	// Buffer to store the samples
 	xSamples := make([]uint8, len(parts))
-	ySamples := make([]uint8, len(parts))
-
 	// Set the x value for each sample and ensure no x_sample values are the same,
 	// otherwise div() can be unhappy
 	// Check that we don't have any duplicate parts, that is, two or
@@ -292,18 +290,15 @@ func Combine(parts [][]byte) ([]byte, error) {
 	}
 
 	// Reconstruct each byte
+	basisFactors := interpolatePolynomial(xSamples)
 	for idx := range secret {
+		var result uint8
 		// Set the y value for each sample
 		for i, part := range parts {
-			ySamples[i] = part[idx]
+			group := mult(part[idx], basisFactors[i])
+			result = add(result, group)
 		}
-
-		// Use Lagrange interpolation to retrieve the free term
-		// of the original polynomial
-		val := interpolatePolynomial(xSamples, ySamples, 0)
-
-		// Evaluate the 0th value to get the intercept
-		secret[idx] = val
+		secret[idx] = result
 	}
 	return secret, nil
 }
