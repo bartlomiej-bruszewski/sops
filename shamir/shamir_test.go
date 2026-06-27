@@ -219,21 +219,21 @@ func TestPrepareLagrangeBasis(t *testing.T){
 		if err!=nil{
 			t.Fatalf("err %v", err)
 		}
-	}
-	xSamples := []uint8{1,2,3}
-	ySamples := []uint8{p.evaluate(1), p.evaluate(2), p.evaluate(3)}
-	expextedSecret := interpolatePolynomial(xSamples, ySamples, 0)
+		xSamples := []uint8{1,2,3}
+		ySamples := []uint8{p.evaluate(1), p.evaluate(2), p.evaluate(3)}
+		expextedSecret := interpolatePolynomial(xSamples, ySamples, 0)
 
-	basisFactors := prepareLagrangeBasis(xSamples)
-	if len(basisFactors) != len(xSamples){
-		t.Fatalf("Invalid basisFactors length. Recieved %d, expected %d.", len(basisFactors), len(xSamples))
-	}
-	var actualSectet uint8
-	for idx, y := range ySamples{
-		group := mult(idx, y)
-		actualSecret = add(actualSecret, group)
-	}
-	if actualSecret!=expectedSecret{
-		t.Fatalf("Mismatch for value %d. New version returned %v, expected %v", i, actualSecret, expectedSecret)
+		basisFactors := prepareLagrangeBasis(xSamples)
+		if len(basisFactors) != len(xSamples){
+			t.Fatalf("Invalid basisFactors length. Recieved %d, expected %d.", len(basisFactors), len(xSamples))
+		}
+		var actualSectet uint8
+		for idx, y := range ySamples{
+			group := mult(idx, y)
+			actualSecret = add(actualSecret, group)
+		}
+		if actualSecret!=expectedSecret{
+			t.Fatalf("Mismatch for value %d. New version returned %v, expected %v", i, actualSecret, expectedSecret)
+		}
 	}
 }
