@@ -290,7 +290,7 @@ func Combine(parts [][]byte) ([]byte, error) {
 	}
 
 	// Reconstruct each byte
-	basisFactors := PrepareLagrangeBasis(xSamples)
+	basisFactors := prepareLagrangeBasis(xSamples)
 	for idx := range secret {
 		var result uint8
 		// Set the y value for each sample
@@ -302,14 +302,14 @@ func Combine(parts [][]byte) ([]byte, error) {
 	}
 	return secret, nil
 }
-func PrepareLagrangeBasis(xSamples []uint8) []uint8 {
+func prepareLagrangeBasis(xSamples []uint8) []uint8 {
 	limit := len(xSamples)
 	bases := make([]uint8, limit)
 
-	for i := 0; i<limit; i++ {
+	for i := 0; i < limit; i++ {
 		var basis uint8 = 1
-		for j := 0; j<limit; j++ {
-			if i==j {
+		for j := 0; j < limit; j++ {
+			if i == j {
 				continue
 			}
 			num := xSamples[j]
