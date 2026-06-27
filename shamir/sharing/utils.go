@@ -26,7 +26,6 @@ func FieldSub(a, b *big.Int) *big.Int {
 	// TWOJE ZADANIE
 }
 
-Spróbuj napisać te dwie funkcje. Nie przejmuj się, jeśli coś pójdzie nie tak z obsługą wskaźników w `math/big` – skorygujemy to i wyjaśnię Ci, jak Go zarządza tą pamięcią!
 
 // FieldMult powinno zwrócić (a * b) mod Prime.
 func FieldMult(a, b *big.Int) *big.Int {
