@@ -17,12 +17,12 @@ func BytesToBigInts(data []byte) ([]*big.Int, error){
 	return result, nil
 }
 
-func BigIntsToBytes(elements []*big.Int) ([]*byte, error){
+func BigIntsToBytes(elements []*big.Int) ([]byte, error){
 	if len(elements)==0{
 		return nil, errors.New("Empty elements")
 	}
-	result =: make([]*byte, len(data))
-	for i, B := range elements{
+	result := make([]byte, len(elements))
+	for i, elem := range elements{
 		result[i] = byte(elem.Uint64())
 	}
 	return result, nil
