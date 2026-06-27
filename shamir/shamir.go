@@ -26,7 +26,6 @@ const (
 type polynomial struct {
 	coefficients []uint8
 }
-
 // makePolynomial constructs a random polynomial of the given
 // degree but with the provided intercept value.
 func makePolynomial(intercept, degree uint8) (polynomial, error) {
