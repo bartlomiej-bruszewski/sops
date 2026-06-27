@@ -227,7 +227,7 @@ func TestPrepareLagrangeBasis(t *testing.T){
 		if len(basisFactors) != len(xSamples){
 			t.Fatalf("Invalid basisFactors length. Recieved %d, expected %d.", len(basisFactors), len(xSamples))
 		}
-		var actualSectet uint8
+		var actualSecret uint8
 		for idx, y := range ySamples{
 			group := mult(basisFactors[idx], y)
 			actualSecret = add(actualSecret, group)
