@@ -39,8 +39,8 @@ func FieldMult(a, b *big.Int) *big.Int {
 func FieldDiv(a, b *big.Int) (*big.Int, error) {
 	inv := new(big.Int).ModInverse(b, Prime)
 	if inv == nil{
-		errors.New("division by zero")
+		return nil, errors.New("division by zero")
 	}
-	res := new(big.Int).Mul(a,b)
+	res := new(big.Int).Mul(a,inv)
 	return res.Mod(res, Prime), nil
 }
