@@ -70,12 +70,11 @@ func (p *polynomial) evaluate(x uint8) uint8 {
 // An implementation of Lagrange interpolation
 // <https://en.wikipedia.org/wiki/Lagrange_polynomial>
 // For this particular implementation, x is always 0
-func interpolatePolynomial(xSamples, ySamples []uint8, x uint8) []uint8 {
+func interpolatePolynomial(xSamples, ySamples []uint8, x uint8) uint8 {
 	limit := len(xSamples)
-	basisFactors := make([]uint8, limit)
-	const x uint8 = 0
+	var result, basis uint8
 	for i := 0; i < limit; i++ {
-		var basis uint8 = 1
+		basis = 1
 		for j := 0; j < limit; j++ {
 			if i == j {
 				continue
@@ -303,17 +302,17 @@ func Combine(parts [][]byte) ([]byte, error) {
 	}
 	return secret, nil
 }
-func prepareLagrangeBasis(xSamples []uint8) []uint8 {
+func PrepareLagrangeBasis(xSamples []uint8) []uint8 {
 	limit := len(xSamples)
 	bases := make([]uint8, limit)
 
-	for i := 0, i<limit, i++ {
+	for i := 0; i<limit; i++ {
 		var basis uint8 = 1
-		for j := 0, j<limit, j++ {
+		for j := 0; j<limit; j++ {
 			if i==j {
 				continue
 			}
-			num := xSamples[i]
+			num := xSamples[j]
 			denom := add(xSamples[i], xSamples[j])
 			term := div(num, denom)
 			basis = mult(basis, term)
