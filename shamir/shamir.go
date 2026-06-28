@@ -26,7 +26,6 @@ const (
 type polynomial struct {
 	coefficients []uint8
 }
-
 // makePolynomial constructs a random polynomial of the given
 // degree but with the provided intercept value.
 func makePolynomial(intercept, degree uint8) (polynomial, error) {
@@ -222,18 +221,18 @@ func Split(secret []byte, parts, threshold int) ([][]byte, error) {
 		out[idx][len(secret)] = uint8(idx) + 1
 	}
 
+	degree := threshold - 1
+	randomBytes := make([]byte, len(secret)*degree)
+	if _, err := rand.Read(randomBytes); err != nil{
+		return nil, fmt.Errorf("failed to generate randomBytes: %w", err)
+	}
 	// Construct a random polynomial for each byte of the secret.
 	// Because we are using a field of size 256, we can only represent
 	// a single byte as the intercept of the polynomial, so we must
 	// use a new polynomial for each byte.
 	for idx, val := range secret {
-		// Create a random polynomial for each point.
-		// This polynomial crosses the y axis at `val`.
-		p, err := makePolynomial(val, uint8(threshold-1))
-		if err != nil {
-			return nil, fmt.Errorf("failed to generate polynomial: %w", err)
-		}
-
+		// Slice a part of randomBytes for this particular polynomial
+		coeffs := randomBytes[idx*degree : (idx+1)*degree]
 		// Generate a `parts` number of (x,y) pairs
 		// We cheat by encoding the x value once as the final index,
 		// so that it only needs to be stored once.
@@ -241,9 +240,12 @@ func Split(secret []byte, parts, threshold int) ([][]byte, error) {
 			// Add 1 to the xCoordinate because if it's 0,
 			// then the result of p.evaluate(x) will be our secret
 			x := uint8(i) + 1
-			// Evaluate the polynomial at x
-			y := p.evaluate(x)
-			out[i][idx] = y
+			outVal := coeffs[degree-1]
+			for j := degree - 2; j>=0; j--{
+				outVal = add(mult(outVal, x), coeffs[j])
+			}
+			outVal = add(mult(outVal, x), val)
+			out[i][idx] = outVal
 		}
 	}
 
@@ -275,8 +277,6 @@ func Combine(parts [][]byte) ([]byte, error) {
 
 	// Buffer to store the samples
 	xSamples := make([]uint8, len(parts))
-	ySamples := make([]uint8, len(parts))
-
 	// Set the x value for each sample and ensure no x_sample values are the same,
 	// otherwise div() can be unhappy
 	// Check that we don't have any duplicate parts, that is, two or
@@ -292,18 +292,33 @@ func Combine(parts [][]byte) ([]byte, error) {
 	}
 
 	// Reconstruct each byte
-	for idx := range secret {
-		// Set the y value for each sample
-		for i, part := range parts {
-			ySamples[i] = part[idx]
+	basisFactors := prepareLagrangeBasis(xSamples)
+	// Inverted loops to improve CPU cache locality through sequential memory access 
+	for i, part := range parts {
+		basis := basisFactors[i]
+		for idx := range secret {
+			group := mult(part[idx], basis)
+			secret[idx] = add(secret[idx], group)
 		}
-
-		// Use Lagrange interpolation to retrieve the free term
-		// of the original polynomial
-		val := interpolatePolynomial(xSamples, ySamples, 0)
-
-		// Evaluate the 0th value to get the intercept
-		secret[idx] = val
 	}
 	return secret, nil
+}
+func prepareLagrangeBasis(xSamples []uint8) []uint8 {
+	limit := len(xSamples)
+	bases := make([]uint8, limit)
+
+	for i := 0; i < limit; i++ {
+		var basis uint8 = 1
+		for j := 0; j < limit; j++ {
+			if i == j {
+				continue
+			}
+			num := xSamples[j]
+			denom := add(xSamples[i], xSamples[j])
+			term := div(num, denom)
+			basis = mult(basis, term)
+		}
+		bases[i] = basis
+	}
+	return bases
 }
