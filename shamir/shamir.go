@@ -222,6 +222,11 @@ func Split(secret []byte, parts, threshold int) ([][]byte, error) {
 		out[idx][len(secret)] = uint8(idx) + 1
 	}
 
+	degree := threshold - 1
+	randomBytes := make([]byte, len(secret)*degree)
+	if _, err := rand.Read(randomBytes); err != nil{
+		return nil, fmt.Errorf("failed to generate randomBytes: %w", err)
+	}
 	// Construct a random polynomial for each byte of the secret.
 	// Because we are using a field of size 256, we can only represent
 	// a single byte as the intercept of the polynomial, so we must
