@@ -212,3 +212,28 @@ func TestInterpolate_Rand(t *testing.T) {
 		}
 	}
 }
+
+func TestPrepareLagrangeBasis(t *testing.T){
+	for i:=0; i<256; i++{
+		p, err := makePolynomial(uint8(i), 2)
+		if err!=nil{
+			t.Fatalf("err %v", err)
+		}
+		xSamples := []uint8{1,2,3}
+		ySamples := []uint8{p.evaluate(1), p.evaluate(2), p.evaluate(3)}
+		expectedSecret := interpolatePolynomial(xSamples, ySamples, 0)
+
+		basisFactors := prepareLagrangeBasis(xSamples)
+		if len(basisFactors) != len(xSamples){
+			t.Fatalf("Invalid basisFactors length. Recieved %d, expected %d.", len(basisFactors), len(xSamples))
+		}
+		var actualSecret uint8
+		for idx, y := range ySamples{
+			group := mult(basisFactors[idx], y)
+			actualSecret = add(actualSecret, group)
+		}
+		if actualSecret!=expectedSecret{
+			t.Fatalf("Mismatch for value %d. New version returned %v, expected %v", i, actualSecret, expectedSecret)
+		}
+	}
+}
