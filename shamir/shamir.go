@@ -26,7 +26,6 @@ const (
 type polynomial struct {
 	coefficients []uint8
 }
-
 // makePolynomial constructs a random polynomial of the given
 // degree but with the provided intercept value.
 func makePolynomial(intercept, degree uint8) (polynomial, error) {
@@ -275,8 +274,6 @@ func Combine(parts [][]byte) ([]byte, error) {
 
 	// Buffer to store the samples
 	xSamples := make([]uint8, len(parts))
-	ySamples := make([]uint8, len(parts))
-
 	// Set the x value for each sample and ensure no x_sample values are the same,
 	// otherwise div() can be unhappy
 	// Check that we don't have any duplicate parts, that is, two or
@@ -292,18 +289,34 @@ func Combine(parts [][]byte) ([]byte, error) {
 	}
 
 	// Reconstruct each byte
+	basisFactors := prepareLagrangeBasis(xSamples)
 	for idx := range secret {
+		var result uint8
 		// Set the y value for each sample
 		for i, part := range parts {
-			ySamples[i] = part[idx]
+			group := mult(part[idx], basisFactors[i])
+			result = add(result, group)
 		}
-
-		// Use Lagrange interpolation to retrieve the free term
-		// of the original polynomial
-		val := interpolatePolynomial(xSamples, ySamples, 0)
-
-		// Evaluate the 0th value to get the intercept
-		secret[idx] = val
+		secret[idx] = result
 	}
 	return secret, nil
+}
+func prepareLagrangeBasis(xSamples []uint8) []uint8 {
+	limit := len(xSamples)
+	bases := make([]uint8, limit)
+
+	for i := 0; i < limit; i++ {
+		var basis uint8 = 1
+		for j := 0; j < limit; j++ {
+			if i == j {
+				continue
+			}
+			num := xSamples[j]
+			denom := add(xSamples[i], xSamples[j])
+			term := div(num, denom)
+			basis = mult(basis, term)
+		}
+		bases[i] = basis
+	}
+	return bases
 }
